@@ -19,9 +19,18 @@
     "swiftui_launch_verified": true,
     "displayed_build": "1",
     "displayed_counter": 1,
-    "persistence_after_relaunch": "not_yet_verified",
+    "persistence_after_relaunch": "passed_user_report_2026-10-24",
     "persistence_after_update": "not_yet_verified",
     "effective_signed_bundle_id": "not_yet_verified",
     "signing_account_type": "not_independently_verified"
+  },
+  "next_probe": {
+    "version": "0.0.2",
+    "compilation": "pending",
+    "signing": "pending",
+    "installation": "pending",
+    "widget_intent": "pending",
+    "app_groups": "pending",
+    "data_retention_after_update": "pending"
   }
 }
