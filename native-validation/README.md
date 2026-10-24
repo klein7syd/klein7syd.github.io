@@ -1,6 +1,6 @@
 # 原生 iPhone 安装验证
 
-本次源码已由 GitHub macOS Runner 实际编译成功，尚未在 iPhone 安装。
+本次源码已由 GitHub macOS Runner 实际编译成功。2026-10-24，用户反馈使用 iPASide，并提供 iPhone 截图，确认构建 1 的原生 SwiftUI App 已启动。
 
 - 构建记录：https://github.com/klein7syd/klein7syd.github.io/actions/runs/40096411931
 - 测试分支：native-install-probe
@@ -15,16 +15,15 @@ Xcode 26.6 / iOS 26.5 SDK；Swift 编译目标 arm64-apple-ios17.0。
 
 IPA SHA256：b207c6c7be30c4f7f2ab0523f3986ef90d56b3e93d4bc246b6b7a888fdfbc87b。
 
-## Windows：只需进行签名和安装
+## iPhone 实机反馈
 
-1. 下载实际构建的 NativeInstallProbe-unsigned.ipa。若从 GitHub 下载 Artifact ZIP，先解压出里面的 IPA，不要把外层 ZIP 拖入签名工具。
-2. 从 https://sideloadly.io/ 获取 Sideloadly；根据官网要求准备 Apple 官网版 iTunes/iCloud。已有可用驱动时先检查设备是否识别，不要盲目卸载系统软件。
-3. USB 连接 iPhone、解锁，手机上点“信任此电脑”。打开 Sideloadly，选择设备和这个 IPA，使用 Apple ID Sideload 模式。
-4. 由本人在 Sideloadly 输入免费 Apple Account 及验证信息，然后开始。凭据不要填入 GitHub，也不需要发送给开发助手。
-5. 手机如提示未受信任开发者，到“设置 → 通用 → VPN 与设备管理”信任对应账号。如提示需要开发者模式，到“设置 → 隐私与安全 → 开发者模式”开启并按提示重启确认。
-6. 主屏幕打开“原生安装测试”。看到“SwiftUI 已运行”、构建号 1 后计数三次，完全退出再打开，核对仍为 3。
+用户使用的安装工具是 **iPASide**。截图显示“原生安装测试”“SwiftUI 已运行”、构建号 1、计数 1，因此可以确认原生 App 已安装并启动。截图不能独立证明签名账号类型或重签名后的实际 Bundle ID。
 
-如 Sideloadly 提供自动刷新，可在首次签名安装成功后启用并保留其所需的运行/连接条件；自动刷新配置结果不代替 App 安装测试。
+已走通的操作链为：GitHub macOS 编译 → 下载未签名 IPA → 用户在 Windows 使用 iPASide 完成签名安装 → iPhone 启动。未签名 IPA 本身仍不能直接安装。
+
+下一步只做保存验证：点击“计数 +1”至 3，在应用切换器划掉 App，再从主屏幕打开，核对是否仍为 3。等待用户反馈；尚未确认退出重开保存、覆盖更新保存或自动刷新。
+
+后续继续使用同一 iPASide 签名账号和实际 Bundle ID。签名凭据由用户自行输入，不需要放入 GitHub 或发给开发助手。
 
 ## 覆盖更新与固定身份
 
@@ -34,7 +33,7 @@ IPA SHA256：b207c6c7be30c4f7f2ab0523f3986ef90d56b3e93d4bc246b6b7a888fdfbc87b。
 
 ## 当前限制
 
-仅验证原生启动、按钮、本地保存、安装及后续覆盖更新。WidgetKit、App Intents、App Groups、Liquid Glass、壁纸和完整待办功能没有加入这个最小测试 App，等待真实安装成功后再单独验证。
+原生安装和启动已有实机截图；按钮操作已有计数变化的用户截图。退出重开保存与覆盖更新保存仍待实测。WidgetKit、App Intents、App Groups、Liquid Glass、壁纸和完整待办功能没有加入这个最小测试 App，待最小安装测试反馈完成后再单独验证。
 
 旧 Windows 项目尚未上传至本次环境，因此本次成功不代表原有 TodoWallpaper-iOS 全部源码已修复或编译通过。博客 main 分支未修改；验证文件仅在专用测试分支。
 

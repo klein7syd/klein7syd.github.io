@@ -10,5 +10,18 @@
   "executable_bytes": 98952,
   "ipa_bytes": 13655,
   "sha256": "b207c6c7be30c4f7f2ab0523f3986ef90d56b3e93d4bc246b6b7a888fdfbc87b",
-  "installation_verified": false
+  "installation_verified": true,
+  "artifact_scope": "Unsigned GitHub Actions output; signature/profile fields above describe the downloaded IPA before local re-signing.",
+  "device_verification": {
+    "date": "2026-10-24",
+    "evidence": "User-provided iPhone screenshot IMG_0721[1].PNG and user statement that iPASide was used.",
+    "installation_tool_reported": "iPASide",
+    "swiftui_launch_verified": true,
+    "displayed_build": "1",
+    "displayed_counter": 1,
+    "persistence_after_relaunch": "not_yet_verified",
+    "persistence_after_update": "not_yet_verified",
+    "effective_signed_bundle_id": "not_yet_verified",
+    "signing_account_type": "not_independently_verified"
+  }
 }
