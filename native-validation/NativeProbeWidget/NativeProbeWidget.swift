@@ -73,6 +73,5 @@ struct NativeProbeWidget: Widget {
         .configurationDisplayName("原生能力验证")
         .description("验证 App Groups 与无需打开 App 的待办操作。")
         .supportedFamilies([.systemSmall, .systemMedium])
-        .contentMarginsDisabled(false)
     }
 }
