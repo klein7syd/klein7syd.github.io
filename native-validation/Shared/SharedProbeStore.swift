@@ -67,11 +67,11 @@ struct SharedProbeStore {
             forSecurityApplicationGroupIdentifier: Self.groupID
         ) else { throw ProbeStorageError.unavailable(Self.groupID) }
         let lockURL = container.appendingPathComponent("native-probe-v1.lock")
-        let descriptor = Darwin.open(lockURL.path, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR)
+        // O_EXLOCK acquires the BSD advisory lock as part of open(). Closing
+        // the descriptor releases it, including if either process is killed.
+        let descriptor = Darwin.open(lockURL.path, O_CREAT | O_RDWR | O_EXLOCK, S_IRUSR | S_IWUSR)
         guard descriptor >= 0 else { throw ProbeStorageError.lockFailed(errno) }
         defer { Darwin.close(descriptor) }
-        guard Darwin.flock(descriptor, LOCK_EX) == 0 else { throw ProbeStorageError.lockFailed(errno) }
-        defer { Darwin.flock(descriptor, LOCK_UN) }
         let dataURL = container.appendingPathComponent("native-probe-v1.json")
         let exists = FileManager.default.fileExists(atPath: dataURL.path)
         var state = exists
