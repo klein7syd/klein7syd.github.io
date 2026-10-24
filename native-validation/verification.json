@@ -1,0 +1,14 @@
+{
+  "bundle_id": "org.todowallpaper.nativeinstallprobe",
+  "version": "0.0.1",
+  "build": "1",
+  "minimum_os": "17.0",
+  "architecture": "arm64",
+  "platform": "iOS device",
+  "code_signature": false,
+  "provisioning_profile": false,
+  "executable_bytes": 98952,
+  "ipa_bytes": 13655,
+  "sha256": "b207c6c7be30c4f7f2ab0523f3986ef90d56b3e93d4bc246b6b7a888fdfbc87b",
+  "installation_verified": false
+}
