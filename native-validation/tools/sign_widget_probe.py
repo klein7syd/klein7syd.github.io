@@ -6,6 +6,7 @@ uses zsign's repeated -m option, and checks both identities before installation.
 The Windows/Apple/device stages are NOT verified by the cloud build.
 """
 import argparse
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -16,6 +17,8 @@ import tempfile
 import zipfile
 
 from verify_ipa import BASE_ID, GROUP_ID, ROOT, EXT, verify, require, profile_plist
+
+REPAIR_VERSION = '0.0.2-build5-signing-r1'
 
 
 def signing_assets(provision, app_id, serial, group, scratch, label):
@@ -46,6 +49,20 @@ def patch_unsigned(source, output, app_id, group):
             target.writestr(info, data)
 
 
+def embed_profiles(source, output, main_profile, widget_profile):
+    # Older zsign multi-profile versions embed the extension profile AFTER
+    # generating CodeResources. Stage the exact bytes first so no resource is
+    # added/changed after sealing, including when the signer writes them again.
+    with zipfile.ZipFile(source) as z, zipfile.ZipFile(output, 'w', zipfile.ZIP_DEFLATED) as target:
+        for info in z.infolist():
+            target.writestr(info, z.read(info.filename))
+        for prefix, profile in [(ROOT, main_profile), (EXT, widget_profile)]:
+            require(prefix + 'embedded.mobileprovision' not in z.namelist(), 'Input already contains a profile')
+            info = zipfile.ZipInfo(prefix + 'embedded.mobileprovision')
+            info.external_attr = (0o100644 << 16)
+            target.writestr(info, Path(profile).read_bytes())
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('ipa')
@@ -53,6 +70,7 @@ def main():
     parser.add_argument('--sign-only', action='store_true')
     args = parser.parse_args()
     source = Path(args.ipa).resolve()
+    print('Signing repair: ' + REPAIR_VERSION, flush=True)
     verify(source, unsigned=True)
     from ipaside_engine import apps, developer, device, gsa, paths, provision, signing
 
@@ -72,7 +90,7 @@ def main():
     print('Shared group: ' + group, flush=True)
     out = source.parent / 'widget-probe-local-output'
     out.mkdir(exist_ok=True)
-    report = {'source_sha256':verify(source, unsigned=True)['sha256'],
+    report = {'repair_version':REPAIR_VERSION, 'source_sha256':verify(source, unsigned=True)['sha256'],
               'app_id':app_id, 'extension_id':app_id + '.widget', 'app_group':group,
               'cloud_compilation':'previously_verified', 'local_signing':'not_performed',
               'installation':'not_performed', 'device_widget_function':'not_verified',
@@ -94,24 +112,45 @@ def main():
             patched = scratch / 'input.ipa'
             patch_unsigned(source, patched, app_id, group)
             verify(patched, unsigned=True, expected_app_id=app_id, expected_group=group)
+            prepared = scratch / 'profiles-staged.ipa'
+            embed_profiles(patched, prepared, main_profile, ext_profile)
             signed = out / 'NativeInstallProbe-widgets-signed.ipa'
+            if signed.exists():
+                try:
+                    verify(signed, expected_app_id=app_id, expected_group=group)
+                    report['previous_signed_package'] = 'resource_and_code_hash_checks_passed'
+                except Exception as old_error:
+                    report['previous_signed_package'] = str(old_error)
+                    print('Previous signed package check: ' + str(old_error), flush=True)
+                save()
             # Repeated -m selects a distinct profile/entitlements for each bundle.
             # No -E flag: the Widget extension must survive signing.
-            command = [signing.resolve_zsign(), '-k', main_bundle['p12_path'],
+            signer = signing.resolve_zsign()
+            report['signer_sha256'] = hashlib.sha256(Path(signer).read_bytes()).hexdigest()
+            version = subprocess.run([signer, '-v'], capture_output=True, text=True, encoding='utf-8', errors='replace')
+            report['signer_version'] = (version.stdout + version.stderr).strip()
+            print('Signer version: ' + report['signer_version'], flush=True)
+            report['local_signing'] = 'attempting'
+            save()
+            command = [signer, '-k', main_bundle['p12_path'],
                        '-p', main_bundle['p12_password'], '-m', str(main_profile),
                        '-m', str(ext_profile), '-t', str(scratch), '-f', '-z', '6',
-                       '-o', str(signed), str(patched)]
+                       '-o', str(signed), str(prepared)]
             result = subprocess.run(command, capture_output=True, text=True, encoding='utf-8', errors='replace')
             # Keep signing diagnostics locally; never print the command containing P12 options.
             (out / 'zsign.log').write_text(result.stdout + '\n' + result.stderr, encoding='utf-8')
+            report['local_signing'] = 'tool_returned_success_integrity_check_pending' if result.returncode == 0 else 'tool_failed'
+            save()
             require(result.returncode == 0, 'zsign failed; see widget-probe-local-output/zsign.log')
             structure = verify(signed, expected_app_id=app_id, expected_group=group)
             (out / 'signed-package-verification.json').write_text(json.dumps(structure, ensure_ascii=False, indent=2), encoding='utf-8')
-            report.update(local_signing='tool_succeeded_and_both_profiles_and_entitlements_checked', signed_sha256=structure['sha256'])
+            report.update(local_signing='tool_succeeded_profiles_entitlements_resources_and_code_hashes_checked', signed_sha256=structure['sha256'])
             save()
-            print('SIGNING TOOL SUCCEEDED; BOTH TARGET IDENTITIES AND APP GROUP ENTITLEMENTS CHECKED.', flush=True)
+            print('SIGNING TOOL SUCCEEDED; BOTH IDENTITIES, APP GROUPS, RESOURCE SEALS AND CODE HASHES CHECKED.', flush=True)
             if not args.sign_only:
                 print('Installing over the existing app; do not delete the app.', flush=True)
+                report['installation'] = 'attempting'
+                save()
                 apps.install(str(signed), serial, progress=lambda value: print('Install: ' + str(value.get('Status', value.get('status', 'working'))), flush=True))
                 current = apps.list_installed(serial).get(app_id)
                 require(current is not None, 'Install returned but app not listed')
@@ -123,6 +162,8 @@ def main():
             print('Use this companion for this probe. Ordinary iPASide auto-refresh is not verified with these two profiles.', flush=True)
             print('Local report: ' + str(report_path), flush=True)
         except Exception as error:
+            if report['installation'] == 'attempting':
+                report['installation'] = 'failed'
             report['failure'] = str(error)
             save()
             raise

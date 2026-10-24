@@ -2,6 +2,12 @@
 
 当前交付：**0.0.2，构建 5**。只修改 `native-install-probe` 分支的独立 `native-validation` 工程及其 Actions 工作流；博客 main 与原 Windows 项目没有修改。
 
+## 签名修复 R1（当前下载包）
+
+用户报告构建 5 安装失败：Widget 扩展资源签名被设备拒绝（0xe8008017）。上一版只检查身份和权限，没有检查资源封装，不能视为签名有效。
+
+[修复说明与操作](SIGNING-REPAIR.md)：保持同一构建 5 IPA，签名前先嵌入主 App/Widget 的最终 profile，兼容旧 zsign 的多 profile 封装顺序；增加资源/代码哈希检查。Linux 上已用真实 IPA 与人工测试身份复现旧问题、验证预嵌入修复，并测试篡改拦截。Windows R1 签名安装、覆盖数据保留、小组件功能仍待真机反馈。证据在 signing-repair-evidence/；没有重新编译 App 或变更 Bundle ID。
+
 ## 已有真机证据
 
 构建 1：用户使用 Windows iPASide、免费 Apple Account 安装到 iPhone，截图确认 SwiftUI 启动与计数按钮正常；用户进一步确认划掉后台后计数保留。该反馈不等于构建 5 的签名/安装/小组件测试通过。

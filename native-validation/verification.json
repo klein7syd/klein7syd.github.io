@@ -37,8 +37,8 @@
     "ipa_sha256": "54d62cade526e589e8c9f416914e502383674b0ba9aef4af1c614eab92fee96c",
     "artifact_sha256": "85ccd6d57351865e633cfb121eb87d46497f5956a3a9e770cc5a44705c3e083b",
     "windows_companion": "syntax_and_parser_boundary_checks_only_not_executed_on_windows",
-    "signing": "not_yet_performed",
-    "installation": "not_yet_performed",
+    "signing": "previous_tool_returned_success_but_device_rejected_widget_resource_seal",
+    "installation": "failed_user_report_0xe8008017",
     "widget_intent_on_device": "not_yet_verified",
     "app_groups_on_device": "not_yet_verified",
     "data_retention_after_update": "not_yet_verified",
@@ -70,5 +70,40 @@
         "intent_open_app_when_run": false
       }
     ]
+  },
+  "signing_repair_r1": {
+    "repair_version": "0.0.2-build5-signing-r1",
+    "reported_install_failure": "ApplicationVerificationFailed / NativeProbeWidget.appex / 0xe8008017",
+    "previous_package_status": "Device rejected resource signature; prior identity/entitlement checks were insufficient.",
+    "fix": "Embed both exact provisioning profiles before multi-profile signing; verify all sealed files, unexpected files, Info.plist/resource/entitlement slots and executable page hashes before installation.",
+    "unchanged_unsigned_ipa_sha256": "54d62cade526e589e8c9f416914e502383674b0ba9aef4af1c614eab92fee96c",
+    "app_version": "0.0.2",
+    "app_build": "5",
+    "test_environment": "Linux, official zsign v1.1.1 and v1.1.2, actual build-5 unsigned device IPA, synthetic certificate chain/profiles only",
+    "fixture_results": {
+      "scope": "synthetic_identity_resource_integrity_only",
+      "iphone_installation": "not_tested",
+      "cases": {
+        "old_signer_without_staging": {
+          "integrity_passed": false,
+          "detail": "Resource added after sealing: Payload/NativeInstallProbe.app/PlugIns/NativeProbeWidget.appex/embedded.mobileprovision"
+        },
+        "old_signer_with_staging": {
+          "integrity_passed": true,
+          "detail": "resource seals and code-directory hashes passed"
+        },
+        "fixed_signer_without_staging": {
+          "integrity_passed": true,
+          "detail": "resource seals and code-directory hashes passed"
+        }
+      },
+      "tampered_profile_rejection": "passed",
+      "tampered_code_page_rejection": "passed",
+      "tampered_resource_slot_rejection": "passed"
+    },
+    "windows_r1_execution": "not_yet_verified",
+    "iphone_r1_installation": "not_yet_verified",
+    "widget_function": "not_yet_verified",
+    "apple_signature_trust": "not_established_by_fixture"
   }
 }
