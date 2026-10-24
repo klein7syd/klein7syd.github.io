@@ -3,7 +3,7 @@ set -euo pipefail
 mkdir -p out
 { sw_vers; xcodebuild -version; xcrun --sdk iphoneos --show-sdk-version; } > out/toolchain.txt
 plutil -lint NativeInstallProbe.xcodeproj/project.pbxproj
-plutil -lint NativeInstallProbe/Probe.entitlements NativeProbeWidget/Probe.entitlements NativeProbeWidget/Info.plist
+plutil -lint NativeInstallProbe/Probe.entitlements NativeInstallProbe/Info.plist NativeProbeWidget/Probe.entitlements NativeProbeWidget/Info.plist
 xcodebuild -list -json -project NativeInstallProbe.xcodeproj > out/project.json
 xcodebuild build -project NativeInstallProbe.xcodeproj -scheme NativeInstallProbe -configuration Release -sdk iphoneos -destination 'generic/platform=iOS' -derivedDataPath "$RUNNER_TEMP/native-probe-derived" ARCHS=arm64 CURRENT_PROJECT_VERSION="$GITHUB_RUN_NUMBER" CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY='' DEVELOPMENT_TEAM='' 2>&1 | tee out/build.log
 APP="$RUNNER_TEMP/native-probe-derived/Build/Products/Release-iphoneos/NativeInstallProbe.app"
