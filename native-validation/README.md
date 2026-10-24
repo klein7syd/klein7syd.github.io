@@ -1,45 +1,44 @@
-# 原生 iPhone 安装验证
+# 原生 iPhone 能力验证
 
-本次源码已由 GitHub macOS Runner 实际编译成功。2026-10-24，用户反馈使用 iPASide，并提供 iPhone 截图，确认构建 1 的原生 SwiftUI App 已启动。
+当前交付：**0.0.2，构建 5**。只修改 `native-install-probe` 分支的独立 `native-validation` 工程及其 Actions 工作流；博客 main 与原 Windows 项目没有修改。
 
-- 构建记录：https://github.com/klein7syd/klein7syd.github.io/actions/runs/40096411931
-- 测试分支：native-install-probe
-- 工程目录：native-validation/NativeInstallProbe.xcodeproj
-- 固定原始 Bundle ID：org.todowallpaper.nativeinstallprobe
-- App 版本 0.0.1；本次构建号 1；最低 iOS 17。
+## 已有真机证据
 
-## 已验证结果
+构建 1：用户使用 Windows iPASide、免费 Apple Account 安装到 iPhone，截图确认 SwiftUI 启动与计数按钮正常；用户进一步确认划掉后台后计数保留。该反馈不等于构建 5 的签名/安装/小组件测试通过。
 
-Xcode 26.6 / iOS 26.5 SDK；Swift 编译目标 arm64-apple-ios17.0。
-构建日志出现 BUILD SUCCEEDED；IPA 内可执行文件是 ARM64 Mach-O，LC_BUILD_VERSION 平台值为 2（iOS 真机）。没有 LC_CODE_SIGNATURE、embedded.mobileprovision 或 _CodeSignature，属于供后续签名使用的未签名设备包，不能直接安装。
+## 构建 5 的真实结果
 
-IPA SHA256：b207c6c7be30c4f7f2ab0523f3986ef90d56b3e93d4bc246b6b7a888fdfbc87b。
+- Actions 成功记录：https://github.com/klein7syd/klein7syd.github.io/actions/runs/40101379470
+- 编译提交：9f22d99c5b6e974481f5dfe53ca6efed223f5cc4；Xcode 日志为 BUILD SUCCEEDED。
+- 主 App 与 Widget 均为 ARM64 / iOS device / 最低 iOS 17，版本与构建号一致。
+- IPA 实际包含 `Payload/NativeInstallProbe.app/PlugIns/NativeProbeWidget.appex`。
+- 两端 Info.plist 的共享组标识一致，两个 target 配有 App Groups entitlement 源文件。
+- 两端均已提取 SetProbeTaskCompletionIntent 元数据，openAppWhenRun 为 false。
+- IPA 无代码签名、无 embedded.mobileprovision，不可直接安装。App Groups entitlement 源文件不等于签名已经获得授权。
+- 未签名 IPA SHA256：54d62cade526e589e8c9f416914e502383674b0ba9aef4af1c614eab92fee96c。
 
-## iPhone 实机反馈
+## 这次增加的能力
 
-用户使用的安装工具是 **iPASide**。截图显示“原生安装测试”“SwiftUI 已运行”、构建号 1、计数 1，因此可以确认原生 App 已安装并启动。截图不能独立证明签名账号类型或重签名后的实际 Bundle ID。
+保留旧计数存储键 nativeProbe.counter.v1。增加一条可改文字、可完成/恢复的共享待办。数据逻辑放在 Shared/SharedProbeStore.swift，使用 App Group 中的版本化 JSON、原子写入和跨进程文件锁；读取失败时明确报错，绝不退回各自私有存储伪装共享成功。
 
-已走通的操作链为：GitHub macOS 编译 → 下载未签名 IPA → 用户在 Windows 使用 iPASide 完成签名安装 → iPhone 启动。未签名 IPA 本身仍不能直接安装。
+主 App 在重新进入前台时读取共享文件；小组件使用 Button(intent:) 完成/恢复任务。提供小号与中号 Widget。显示共享修订、写入来源、存储 ID 和实际 Bundle ID，供真机核对；刷新由系统调度，不承诺每秒后台更新。
 
-下一步只做保存验证：点击“计数 +1”至 3，在应用切换器划掉 App，再从主屏幕打开，核对是否仍为 3。等待用户反馈；尚未确认退出重开保存、覆盖更新保存或自动刷新。
+## Windows 本地签名与覆盖安装
 
-后续继续使用同一 iPASide 签名账号和实际 Bundle ID。签名凭据由用户自行输入，不需要放入 GitHub 或发给开发助手。
+见 [DEVICE-TEST.md](DEVICE-TEST.md)。完整解压 Actions 测试包后，使用随包 Install-WidgetProbe.cmd。该脚本复用已安装的 iPASide engine 与登录状态，为主 App/Widget 分别配置 profile 并关联同一共享组，再通过 zsign 多 profile 模式本地签名和安装。
 
-## 覆盖更新与固定身份
+源码主 Bundle ID 始终为 org.todowallpaper.nativeinstallprobe。iPASide 如果已给旧 App 附团队后缀，脚本读取旧 App 的实际 ID 并沿用；扩展为该 ID + .widget。签名账号不匹配或旧 App 无法识别时停止，绝不通过卸载重装规避覆盖验证。
 
-源码 Bundle ID 固定。签名工具如果生成了账号后缀或重写了 ID，要记录实际 ID，后续使用同一账号、同一实际 ID 和同一映射。不要为了更新先卸载旧 App。下一构建覆盖安装后，验证构建号增加而计数保留。
+为何需要脚本：已检查 iPASide 官方源码树 be811fcaea8556fe5108dd25279d626fa0d56435；普通 sideload 默认 remove_extensions=True，只 provision 主 App，app_groups 在普通流程为空；单纯关闭移除扩展不足以验证两份 profile/共享组。本辅助脚本只在本机使用签名材料，不向仓库上传凭据或私钥。
 
-注意：本次界面中的 Bundle ID 文案为源码原始 ID，不能用于证明工具重签名后的实际 ID；实际 ID 要以签名工具/已签名包为准。
+该 Windows 辅助脚本尚未在用户电脑执行。即使签名工具返回成功，也要区分本地签名结构检查、设备安装服务成功、真实 Widget 功能成功。普通 iPASide 自动刷新对此测试包尚未验证，测试期间应暂停，避免旧包或移除扩展的普通签名流程覆盖此包。
 
-## 当前限制
+## 当前尚未通过的项目
 
-原生安装和启动已有实机截图；按钮操作已有计数变化的用户截图。退出重开保存与覆盖更新保存仍待实测。WidgetKit、App Intents、App Groups、Liquid Glass、壁纸和完整待办功能没有加入这个最小测试 App，待最小安装测试反馈完成后再单独验证。
+构建 5 的 Windows 签名、iPhone 覆盖安装数据保留、Widget 出现在组件库、主屏幕直接操作、App Groups 双向共享、此包自动刷新，全部待用户实测。后续更高构建覆盖共享数据保留同样需要实测。
 
-旧 Windows 项目尚未上传至本次环境，因此本次成功不代表原有 TodoWallpaper-iOS 全部源码已修复或编译通过。博客 main 分支未修改；验证文件仅在专用测试分支。
+此工程只有一条测试待办，不是完整待办产品；未加入壁纸、AI、Liquid Glass 美化或 PWA。遇到签名/组件问题请提供报错并保留原 App，不要卸载清数据。
 
-日志仍有两条非致命构建警告：未引用 AppIntents.framework 而跳过其元数据提取；未声明全套界面方向。Actions 另有旧 Node 版本迁移提示。它们不影响本次构建成功，但不能宣称 Zero Warnings。
+## 构建与验证文件
 
-## 后续构建
-
-只修改此测试分支中的独立原生目录。推送后工作流自动构建；构建号使用 GitHub run_number，Bundle ID 不随构建变动。
-已有真实 .xcodeproj 与共享 Scheme，不依赖 XcodeGen 或其他第三方 App 运行库。编译、签名、设备安装分别记录结果。
+`.github/workflows/native-probe.yml` 使用 macos-26，`tools/build.sh` 同时编译两目标并验证 IPA。`tools/verify_ipa.py` 检查实际 Mach-O 平台、扩展层级、版本、ID；本地签名后再检查两份 profile/签名的共享组和身份。它是结构检查，无法代替 Apple 签名信任验证和设备功能测试。`verification.json` 分阶段记录事实。

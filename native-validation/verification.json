@@ -22,15 +22,53 @@
     "persistence_after_relaunch": "passed_user_report_2026-10-24",
     "persistence_after_update": "not_yet_verified",
     "effective_signed_bundle_id": "not_yet_verified",
-    "signing_account_type": "not_independently_verified"
+    "signing_account_type": "free Apple Account, explicitly reported by user"
   },
   "next_probe": {
     "version": "0.0.2",
-    "compilation": "pending",
-    "signing": "pending",
-    "installation": "pending",
-    "widget_intent": "pending",
-    "app_groups": "pending",
-    "data_retention_after_update": "pending"
+    "build": "5",
+    "source_commit": "9f22d99c5b6e974481f5dfe53ca6efed223f5cc4",
+    "actions_run_id": 40101379470,
+    "job_id": 120894056848,
+    "actions_url": "https://github.com/klein7syd/klein7syd.github.io/actions/runs/40101379470",
+    "compilation": "passed_real_xcode_log",
+    "extension_packaging": "passed_real_ipa_inspection",
+    "app_intent_metadata": "present_in_both_bundles_openAppWhenRun_false",
+    "ipa_sha256": "54d62cade526e589e8c9f416914e502383674b0ba9aef4af1c614eab92fee96c",
+    "artifact_sha256": "85ccd6d57351865e633cfb121eb87d46497f5956a3a9e770cc5a44705c3e083b",
+    "windows_companion": "syntax_and_parser_boundary_checks_only_not_executed_on_windows",
+    "signing": "not_yet_performed",
+    "installation": "not_yet_performed",
+    "widget_intent_on_device": "not_yet_verified",
+    "app_groups_on_device": "not_yet_verified",
+    "data_retention_after_update": "not_yet_verified",
+    "artifact_bundles": [
+      {
+        "bundle_id": "org.todowallpaper.nativeinstallprobe",
+        "version": "0.0.2",
+        "build": "5",
+        "app_group": "group.org.todowallpaper.nativeinstallprobe",
+        "embedded_profile": false,
+        "architecture": "arm64",
+        "platform": "iOS device",
+        "signature_present": false,
+        "entitlements": null,
+        "intent_metadata_present": true,
+        "intent_open_app_when_run": false
+      },
+      {
+        "bundle_id": "org.todowallpaper.nativeinstallprobe.widget",
+        "version": "0.0.2",
+        "build": "5",
+        "app_group": "group.org.todowallpaper.nativeinstallprobe",
+        "embedded_profile": false,
+        "architecture": "arm64",
+        "platform": "iOS device",
+        "signature_present": false,
+        "entitlements": null,
+        "intent_metadata_present": true,
+        "intent_open_app_when_run": false
+      }
+    ]
   }
 }
